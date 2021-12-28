@@ -8,9 +8,37 @@ const server = http.createServer((req, res) => {
 
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.end(`<div>
-        1
-        </div>`);
+    res.end(
+        `<style>
+            table{
+                border: 1px solid black;
+                border-collapse: collapse;
+            }
+            
+            table tr{
+                border: 1px solid black;
+            }
+            
+            table tr th,td{
+                border: 1px solid black;
+            }
+            </style>
+            <table>
+            <thead>
+            <tr>
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+            <td>1</td>
+            <td>2</td>
+            <td>3</td>
+            </tr>
+            </tbody>
+            </table>`);
 });
 
 server.listen(port, hostname, () => {
