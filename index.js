@@ -1,29 +1,31 @@
 const http = require('http');
 
 const hostname = '127.0.0.1';
-const port = 3000;
+const port = 3003;
 const fs = require('fs')
 
-const server = http.createServer((req, res) => {
-    const url = req.url.split('?')[0]
-    switch (url) {
-        case '/':
-            index(req, res);
-            break;
-        case '/api/jsons':
-            jsons(req, res);
-            break;
-        case '/api/getAllDates':
-            getAllDates(req, res);
-            break;
-        case '/api/getDateIds':
-            getDateIds(req, res);
-            break;
-        case '/api/getDateDataById':
-            getDateDataById(req, res);
-            break;
+Date.prototype.Format = function (fmt) {
+    var o = {
+        'M+': this.getMonth() + 1,
+        'd+': this.getDate(),
+        'H+': this.getHours(),
+        'm+': this.getMinutes(),
+        's+': this.getSeconds(),
+        'S+': this.getMilliseconds()
+    };
+    //因为date.getFullYear()出来的结果是number类型的,所以为了让结果变成字符串型，下面有两种方法：
+    if (/(y+)/.test(fmt)) {
+        //第一种：利用字符串连接符“+”给date.getFullYear()+''，加一个空字符串便可以将number类型转换成字符串。
+        fmt = fmt.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length));
     }
-});
+    for (var k in o) {
+        if (new RegExp('(' + k + ')').test(fmt)) {
+            //第二种：使用String()类型进行强制数据类型转换String(date.getFullYear())，这种更容易理解。
+            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : (('00' + o[k]).substr(String(o[k]).length)));
+        }
+    }
+    return fmt;
+};
 
 function index(req, res) {
     res.statusCode = 200;
@@ -55,6 +57,7 @@ function index(req, res) {
 <body>
 <select id="datesSelect"></select>
 <select id="idSelect"></select>
+<button id="btnAddJson">新增json</button>
 <table>
     <thead>
     <tr>
@@ -73,9 +76,9 @@ function index(req, res) {
 </table>
 
 <script>
-
 const datesSelect = document.querySelector('#datesSelect')
 const idSelect = document.querySelector('#idSelect')
+const btnAddJson = document.querySelector('#btnAddJson')
 
 datesSelect.addEventListener('change',(e)=>{
    fetch('/api/getDateIds?date='+e.target.value,{method:'GET'}).then(res=>{
@@ -90,6 +93,11 @@ datesSelect.addEventListener('change',(e)=>{
        })
    })
 })
+
+btnAddJson.addEventListener('click',e=>{
+    
+})
+
 idSelect.addEventListener('change',e=>{
 })
 
@@ -110,9 +118,25 @@ fetch('/api/getAllDates',{ method:'GET' }).then(res=>{
     `);
 }
 
-function jsons(req, res) {
-
-}
+const server = http.createServer((req, res) => {
+    const url = req.url.split('?')[0]
+    switch (url) {
+        case '/':
+            index(req, res);
+            break;
+        case '/api/getAllDates':
+            getAllDates(req, res);
+            break;
+        case '/api/getDateIds':
+            getDateIds(req, res);
+            break;
+        case '/api/getDateDataById':
+            getDateDataById(req, res);
+            break;
+        case '/api/addNewJsonFile':
+            addNewJsonFile(req, res)
+    }
+});
 
 function getAllDates(req, res) {
     fs.readdir('jsons', (err, files) => {
@@ -161,6 +185,22 @@ function getParamsFromUrl(url) {
         pre[arr[0]] = arr[1]
         return pre
     }, {});
+}
+
+function addNewJsonFile(req, res) {
+    let today = new Date().Format('yyyy-MM-dd')
+    if (!fs.existsSync(`jsons/${today}`)) fs.mkdirSync(`jsons/${today}`)
+    fs.readdir(`jsons/${today}`, (err, files) => {
+        let max = 1
+        if (files.length > 0) {
+            let nums = files.reduce((pre, file) => {
+                file.replace('.json', '')
+                pre.push(Number(file))
+            }, [])
+            max = Math.max(nums)
+        }
+        fs.writeFileSync(`jsons/${today}/${max}.json`, '[]')
+    })
 }
 
 server.listen(port, hostname, () => {
