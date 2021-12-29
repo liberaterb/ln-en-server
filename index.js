@@ -95,7 +95,16 @@ datesSelect.addEventListener('change',(e)=>{
 })
 
 btnAddJson.addEventListener('click',e=>{
-    
+    fetch('/api/addNewJsonFile',{method:'GET'}).then(res=>{
+        res.text().then(text=>{
+            let res = Boolean(text)
+            if (res){
+                alert('添加成功')
+            }else{
+                alert('添加失败')
+            }
+        })
+    })
 })
 
 idSelect.addEventListener('change',e=>{
@@ -191,15 +200,25 @@ function addNewJsonFile(req, res) {
     let today = new Date().Format('yyyy-MM-dd')
     if (!fs.existsSync(`jsons/${today}`)) fs.mkdirSync(`jsons/${today}`)
     fs.readdir(`jsons/${today}`, (err, files) => {
-        let max = 1
+        let max = 0
         if (files.length > 0) {
             let nums = files.reduce((pre, file) => {
-                file.replace('.json', '')
+                file = file.replace('.json', '')
                 pre.push(Number(file))
+                return pre
             }, [])
-            max = Math.max(nums)
+            max = Math.max(...nums)
         }
-        fs.writeFileSync(`jsons/${today}/${max}.json`, '[]')
+        fs.writeFile(`jsons/${today}/${max+1}.json`, '[]',(err)=>{
+            res.setHeader('Content-Type','text/plain')
+            if (err){
+                res.statusCode = 400
+                res.end('false')
+            }else{
+                res.statusCode = 200
+                res.end('true')
+            }
+        })
     })
 }
 
